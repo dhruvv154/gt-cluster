@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#05070b">
+<title>GT Digital Cluster</title>
+<style>
+  :root {
+    --bg: #05070b;
+    --panel: #0c1118;
+    --line: #1a2330;
+    --text: #e8eef6;
+    --dim: #7d8a9c;
+    --accent: #ff2d3d;      /* GT red */
+    --accent2: #ff7a1a;
+    --ok: #34d17a;
+    --warn: #ffc23d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
+    font-family: -apple-system, "SF Pro Display", "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-user-select: none; }
+
+  .cluster {
+    height: 100%; width: 100%;
+    display: grid; grid-template-rows: auto 1fr auto;
+    padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    gap: 1.2vh;
+    background: radial-gradient(ellipse at 50% 60%, #121a26 0%, var(--bg) 65%);
+  }
+
+  /* top bar */
+  .top { display: flex; justify-content: space-between; align-items: center; font-size: clamp(12px, 2.4vh, 20px); color: var(--dim); }
+  .top .brand { color: var(--text); font-weight: 700; letter-spacing: .12em; }
+  .top .brand b { color: var(--accent); }
+  .gps { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #444; }
+  .dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .dot.weak { background: var(--warn); }
+  .dot.demo { background: #4da3ff; }
+  #clock { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  /* main */
+  .main { display: grid; grid-template-columns: 1fr minmax(0, 1.5fr) 1fr; gap: 1.5vw; align-items: center; min-height: 0; }
+  .side { display: grid; gap: 1.2vh; align-content: center; }
+  .card { background: linear-gradient(180deg, #0e141d, #0a0e14); border: 1px solid var(--line); border-radius: 14px; padding: 1.2vh 1.2vw; }
+  .label { font-size: clamp(9px, 1.7vh, 14px); color: var(--dim); letter-spacing: .1em; text-transform: uppercase; }
+  .val { font-size: clamp(16px, 4.6vh, 40px); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .val small { font-size: .45em; color: var(--dim); font-weight: 500; margin-left: 3px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2vh; }
+
+  /* gauge */
+  .gauge-wrap { position: relative; height: 100%; max-height: 78vh; aspect-ratio: 1; margin: 0 auto; max-width: 100%; }
+  .gauge-wrap svg { width: 100%; height: 100%; overflow: visible; }
+  .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+  #speed { font-size: clamp(48px, 21vh, 190px); font-weight: 800; line-height: .9; font-variant-numeric: tabular-nums; letter-spacing: -.03em; transition: color .3s; }
+  #speed.over { color: var(--accent); text-shadow: 0 0 30px rgba(255,45,61,.5); }
+  .unit { font-size: clamp(12px, 2.8vh, 24px); color: var(--dim); letter-spacing: .2em; margin-top: .6vh; }
+  #heading { margin-top: 1.4vh; font-size: clamp(12px, 2.8vh, 24px); font-weight: 700; color: var(--text); letter-spacing: .15em; }
+  .tick { stroke: #3a4656; stroke-width: 2; }
+  .tick.major { stroke: #9aa7b8; stroke-width: 3; }
+  .tlabel { fill: #8b97a8; font-size: 22px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+
+  /* g meter */
+  .gmeter { position: relative; width: 100%; aspect-ratio: 1; max-height: 24vh; margin: 0 auto; }
+  .gmeter svg { width: 100%; height: 100%; }
+  #gdot { transition: cx .1s linear, cy .1s linear; }
+
+  /* bottom */
+  .bottom { display: flex; justify-content: center; gap: 1vw; flex-wrap: wrap; }
+  button { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 999px;
+    padding: 1vh 1.6vw; font-size: clamp(11px, 2vh, 17px); font-weight: 600; letter-spacing: .05em; cursor: pointer; }
+  button:active { transform: scale(.97); background: #141c27; }
+  button.on { border-color: var(--accent); color: var(--accent); }
+
+  /* start overlay */
+  #start { position: fixed; inset: 0; background: rgba(5,7,11,.94); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4vh; z-index: 10; text-align: center; padding: 20px; }
+  #start h1 { font-size: clamp(22px, 5vh, 44px); letter-spacing: .08em; }
+  #start h1 b { color: var(--accent); }
+  #start p { color: var(--dim); max-width: 560px; font-size: clamp(12px, 2.2vh, 17px); line-height: 1.5; }
+  #start .warn { color: var(--warn); }
+  #start button { padding: 1.6vh 4vw; font-size: clamp(14px, 2.8vh, 22px); }
+  #start button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .hidden { display: none !important; }
+
+  /* portrait fallback (phone held upright) */
+  @media (orientation: portrait) {
+    .main { grid-template-columns: 1fr; grid-template-rows: auto auto auto; overflow-y: auto; }
+    .gauge-wrap { height: auto; width: 88vw; max-height: none; }
+    .side { grid-template-columns: 1fr 1fr; }
+    .gmeter { max-height: 18vh; }
+  }
+</style>
+</head>
+<body>
+<div class="cluster">
+  <div class="top">
+    <div class="brand">VIRTUS <b>GT</b></div>
+    <div class="gps"><span class="dot" id="gpsDot"></span><span id="gpsText">GPS off</span></div>
+    <div id="clock">--:--</div>
+  </div>
+
+  <div class="main">
+    <!-- left: trip -->
+    <div class="side">
+      <div class="card"><div class="label">Trip</div><div class="val"><span id="trip">0.0</span><small>km</small></div></div>
+      <div class="row2">
+        <div class="card"><div class="label">Avg</div><div class="val"><span id="avg">0</span><small>km/h</small></div></div>
+        <div class="card"><div class="label">Max</div><div class="val"><span id="max">0</span><small>km/h</small></div></div>
+      </div>
+      <div class="card"><div class="label">Drive time</div><div class="val" id="time">0:00:00</div></div>
+    </div>
+
+    <!-- center: speedometer -->
+    <div class="gauge-wrap">
+      <svg viewBox="0 0 500 500" id="gauge">
+        <defs>
+          <linearGradient id="arcGrad" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0%" stop-color="#ff7a1a"/>
+            <stop offset="100%" stop-color="#ff2d3d"/>
+          </linearGradient>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g id="ticks"></g>
+        <path id="track" fill="none" stroke="#141c27" stroke-width="22" stroke-linecap="round"/>
+        <path id="arc" fill="none" stroke="url(#arcGrad)" stroke-width="22" stroke-linecap="round" pathLength="100"
+              stroke-dasharray="100 100" stroke-dashoffset="100" filter="url(#glow)" style="transition: stroke-dashoffset .25s linear"/>
+        <circle id="limitMark" r="7" fill="#ffc23d"/>
+      </svg>
+      <div class="center">
+        <div id="speed">0</div>
+        <div class="unit">KM/H</div>
+        <div id="heading">—</div>
+      </div>
+    </div>
+
+    <!-- right: g-force, altitude, 0-100 -->
+    <div class="side">
+      <div class="card">
+        <div class="label">G-force <span id="gval" style="color:var(--text);float:right">0.00 g</span></div>
+        <div class="gmeter">
+          <svg viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="92" fill="none" stroke="#1a2330" stroke-width="2"/>
+            <circle cx="100" cy="100" r="61" fill="none" stroke="#1a2330" stroke-width="2"/>
+            <circle cx="100" cy="100" r="30" fill="none" stroke="#1a2330" stroke-width="2"/>
+            <line x1="8" y1="100" x2="192" y2="100" stroke="#1a2330" stroke-width="2"/>
+            <line x1="100" y1="8" x2="100" y2="192" stroke="#1a2330" stroke-width="2"/>
+            <text x="166" y="96" fill="#56627a" font-size="13">1g</text>
+            <circle id="gdot" cx="100" cy="100" r="11" fill="#ff2d3d" filter="url(#glow)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="card"><div class="label">Altitude</div><div class="val"><span id="alt">—</span><small>m</small></div></div>
+        <div class="card"><div class="label">0–100</div><div class="val"><span id="zeroto">—</span><small>s</small></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <button id="btnReset">RESET TRIP</button>
+    <button id="btnLimit">LIMIT 80</button>
+    <button id="btnCal">CALIBRATE G</button>
+    <button id="btnDemo">DEMO</button>
+  </div>
+</div>
+
+<div id="start">
+  <h1>VIRTUS <b>GT</b> CLUSTER</h1>
+  <p>Speed, trip and heading come from your phone's GPS. G-force comes from the phone's motion sensor (mount the phone firmly, then tap Calibrate G when stopped).</p>
+  <p class="warn">For co-passenger use only. Drive with your eyes on the road.</p>
+  <button class="primary" id="btnStart">START</button>
+  <button id="btnStartDemo">Try demo drive</button>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  // ---------- gauge geometry ----------
+  const MAX_KMH = 220, CX = 250, CY = 250, R = 205;
+  const A0 = 135, SWEEP = 270; // degrees, 0 = east, clockwise
+  const pt = (deg, r) => { const a = deg * Math.PI / 180; return [CX + r * Math.cos(a), CY + r * Math.sin(a)]; };
+  const arcPath = r => { const [x0, y0] = pt(A0, r), [x1, y1] = pt(A0 + SWEEP, r); return `M ${x0} ${y0} A ${r} ${r} 0 1 1 ${x1} ${y1}`; };
+  $('track').setAttribute('d', arcPath(R));
+  $('arc').setAttribute('d', arcPath(R));
+  const ticks = $('ticks'), NS = 'http://www.w3.org/2000/svg';
+  for (let v = 0; v <= MAX_KMH; v += 10) {
+    const deg = A0 + SWEEP * v / MAX_KMH, major = v % 20 === 0;
+    const [x0, y0] = pt(deg, R - 22), [x1, y1] = pt(deg, R - (major ? 42 : 32));
+    const l = document.createElementNS(NS, 'line');
+    Object.entries({ x1: x0, y1: y0, x2: x1, y2: y1, class: 'tick' + (major ? ' major' : '') }).forEach(([k, val]) => l.setAttribute(k, val));
+    ticks.appendChild(l);
+    if (major) {
+      const [tx, ty] = pt(deg, R - 64), t = document.createElementNS(NS, 'text');
+      t.setAttribute('x', tx); t.setAttribute('y', ty); t.setAttribute('class', 'tlabel'); t.textContent = v;
+      ticks.appendChild(t);
+    }
+  }
+
+  // ---------- state (trip persists across reloads) ----------
+  const store = (() => { try { localStorage.setItem('_t', '1'); return localStorage; } catch (_) { const m = {}; return { getItem: k => m[k] ?? null, setItem: (k, v) => { m[k] = v; } }; } })();
+  let saved = {};
+  try { saved = JSON.parse(store.getItem('gtTrip') || '{}'); } catch (_) {}
+  const st = {
+    dist: saved.dist || 0, moving: saved.moving || 0, max: saved.max || 0,
+    best0100: saved.best0100 || null, limit: saved.limit || 80,
+    speed: 0, shown: 0, last: null, run0100: null, demo: false,
+  };
+  const save = () => store.setItem('gtTrip', JSON.stringify({ dist: st.dist, moving: st.moving, max: st.max, best0100: st.best0100, limit: st.limit }));
+
+  const LIMITS = [60, 80, 100, 120, 140, 0];
+  const setLimitUI = () => {
+    $('btnLimit').textContent = st.limit ? `LIMIT ${st.limit}` : 'LIMIT OFF';
+    $('btnLimit').classList.toggle('on', !!st.limit);
+    const lm = $('limitMark');
+    if (st.limit) { const [x, y] = pt(A0 + SWEEP * st.limit / MAX_KMH, R); lm.setAttribute('cx', x); lm.setAttribute('cy', y); lm.style.display = ''; }
+    else lm.style.display = 'none';
+  };
+  setLimitUI();
+
+  // ---------- helpers ----------
+  const hav = (a, b) => {
+    const R = 6371000, r = Math.PI / 180;
+    const dLat = (b.lat - a.lat) * r, dLon = (b.lon - a.lon) * r;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  };
+  const compass = d => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(d / 45) % 8];
+  const fmtTime = s => { s = Math.floor(s); return `${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+
+  // ---------- core update from a position fix ----------
+  function onFix(f) { // f: {lat, lon, speed (m/s|null), heading, alt, acc, t (ms)}
+    const p = st.last;
+    let kmh = f.speed != null && f.speed >= 0 ? f.speed * 3.6 : null;
+    if (p) {
+      const dt = (f.t - p.t) / 1000;
+      if (dt > 0 && dt < 10) {
+        const d = hav(p, f);
+        if (kmh == null) kmh = d / dt * 3.6;            // fallback when GPS gives no speed
+        if (kmh > 3 && d > Math.min(f.acc, 25) * 0.3) {  // ignore GPS jitter while stationary
+          st.dist += d; st.moving += dt;
+        }
+      }
+    }
+    kmh = Math.max(0, kmh || 0);
+    if (kmh < 2) kmh = 0;
+    st.speed = kmh;
+    st.max = Math.max(st.max, kmh);
+
+    // 0-100 timer: arm when stopped, record when 100 is reached
+    if (kmh < 2) st.run0100 = { t: f.t };
+    else if (st.run0100 && kmh >= 100) {
+      const s = (f.t - st.run0100.t) / 1000;
+      if (s > 2 && (!st.best0100 || s < st.best0100)) st.best0100 = s;
+      st.run0100 = null;
+    }
+
+    if (f.heading != null && !isNaN(f.heading) && kmh > 5) $('heading').textContent = `${compass(f.heading)} ${Math.round(f.heading)}°`;
+    if (f.alt != null) $('alt').textContent = Math.round(f.alt);
+
+    st.last = f;
+    save();
+    render();
+  }
+
+  function render() {
+    $('speed').textContent = Math.round(st.speed);
+    $('speed').classList.toggle('over', !!st.limit && st.speed > st.limit);
+    $('arc').style.strokeDashoffset = 100 - Math.min(100, st.speed / MAX_KMH * 100);
+    $('trip').textContent = (st.dist / 1000).toFixed(1);
+    $('max').textContent = Math.round(st.max);
+    $('avg').textContent = st.moving > 0 ? Math.round(st.dist / st.moving * 3.6) : 0;
+    $('time').textContent = fmtTime(st.moving);
+    $('zeroto').textContent = st.best0100 ? st.best0100.toFixed(1) : '—';
+  }
+  render();
+
+  // ---------- real GPS ----------
+  let watchId = null;
+  function startGPS() {
+    if (!('geolocation' in navigator)) { setGps('', 'No GPS'); return; }
+    watchId = navigator.geolocation.watchPosition(pos => {
+      if (st.demo) return;
+      const c = pos.coords;
+      setGps(c.accuracy <= 20 ? 'ok' : 'weak', `GPS ±${Math.round(c.accuracy)} m`);
+      onFix({ lat: c.latitude, lon: c.longitude, speed: c.speed, heading: c.heading, alt: c.altitude, acc: c.accuracy, t: pos.timestamp });
+    }, err => setGps('', err.code === 1 ? 'GPS denied' : 'No GPS fix'),
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+  }
+  const setGps = (cls, txt) => { $('gpsDot').className = 'dot ' + cls; $('gpsText').textContent = txt; };
+
+  // ---------- G-force from motion sensor ----------
+  let grav = null; // gravity direction captured at calibration
+  let lastAig = null;
+  const norm = v => { const m = Math.hypot(...v) || 1; return v.map(x => x / m); };
+  const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  function onMotion(e) {
+    const g = e.accelerationIncludingGravity, a = e.acceleration;
+    if (!g || g.x == null) return;
+    lastAig = [g.x, g.y, g.z];
+    if (!grav) grav = norm(lastAig);
+    if (st.demo || !a || a.x == null) return;
+    // project linear acceleration onto the horizontal plane (perpendicular to gravity)
+    const lin = [a.x, a.y, a.z];
+    const up = grav;
+    const e1 = norm(cross(up, Math.abs(up[2]) < 0.9 ? [0, 0, 1] : [0, 1, 0]));
+    const e2 = cross(up, e1);
+    showG(dot3(lin, e1) / 9.81, dot3(lin, e2) / 9.81);
+  }
+  let gs = [0, 0];
+  function showG(x, y) {
+    gs = [gs[0] * 0.7 + x * 0.3, gs[1] * 0.7 + y * 0.3]; // smooth
+    const m = Math.hypot(gs[0], gs[1]);
+    const s = Math.min(m, 1) / (m || 1); // clamp the dot to the 1g ring
+    $('gdot').setAttribute('cx', 100 + gs[0] * s * 92);
+    $('gdot').setAttribute('cy', 100 - gs[1] * s * 92);
+    $('gval').textContent = m.toFixed(2) + ' g';
+  }
+  async function startMotion() {
+    try {
+      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        if (await DeviceMotionEvent.requestPermission() !== 'granted') return;
+      }
+      window.addEventListener('devicemotion', onMotion);
+    } catch (_) {}
+  }
+
+  // ---------- keep screen awake ----------
+  let lock = null;
+  async function keepAwake() {
+    try { if ('wakeLock' in navigator) lock = await navigator.wakeLock.request('screen'); } catch (_) {}
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && lock) keepAwake(); });
+
+  // ---------- demo drive (for testing without moving) ----------
+  let demoTimer = null, demoT = 0, demoPos = { lat: 19.076, lon: 72.8777 }, demoHead = 40;
+  function demo(on) {
+    st.demo = on;
+    $('btnDemo').classList.toggle('on', on);
+    clearInterval(demoTimer);
+    if (!on) { setGps('', watchId != null ? 'Waiting for GPS' : 'GPS off'); return; }
+    setGps('demo', 'Demo drive');
+    let v = 0;
+    demoTimer = setInterval(() => {
+      demoT += 0.25;
+      const phase = demoT % 40;
+      const target = phase < 3 ? 0 : phase < 14 ? 135 : phase < 25 ? 70 + 20 * Math.sin(demoT) : phase < 33 ? 105 : 0;
+      v += Math.max(-6, Math.min(4.5, (target - v) * 0.15)); // km/h per tick
+      v = Math.max(0, v);
+      demoHead = (demoHead + (phase > 14 && phase < 25 ? 1.5 : 0.2)) % 360;
+      const d = v / 3.6 * 0.25, r = Math.PI / 180;
+      demoPos = { lat: demoPos.lat + d * Math.cos(demoHead * r) / 111320, lon: demoPos.lon + d * Math.sin(demoHead * r) / (111320 * Math.cos(demoPos.lat * r)) };
+      onFix({ ...demoPos, speed: v / 3.6, heading: demoHead, alt: 14 + Math.sin(demoT / 6) * 3, acc: 5, t: Date.now() });
+      showG(Math.sin(demoT * 0.7) * (phase > 14 && phase < 25 ? 0.45 : 0.08), Math.max(-0.6, Math.min(0.5, (target - v) * 0.02)));
+    }, 250);
+  }
+
+  // ---------- buttons ----------
+  $('btnStart').onclick = () => { $('start').classList.add('hidden'); startGPS(); startMotion(); keepAwake(); };
+  $('btnStartDemo').onclick = () => { $('start').classList.add('hidden'); startMotion(); keepAwake(); demo(true); };
+  $('btnDemo').onclick = () => demo(!st.demo);
+  $('btnReset').onclick = () => {
+    if (!confirm('Reset trip distance, time, average and max?')) return;
+    Object.assign(st, { dist: 0, moving: 0, max: 0, last: null }); save(); render();
+  };
+  $('btnLimit').onclick = () => { st.limit = LIMITS[(LIMITS.indexOf(st.limit) + 1) % LIMITS.length]; save(); setLimitUI(); render(); };
+  $('btnCal').onclick = () => { if (lastAig) { grav = norm(lastAig); gs = [0, 0]; } };
+
+  // ---------- clock ----------
+  const tick = () => { const d = new Date(); $('clock').textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
+  tick(); setInterval(tick, 5000);
+})();
+</script>
+</body>
+</html>
