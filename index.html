@@ -4,93 +4,129 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#05070b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <title>GT Digital Cluster</title>
 <style>
   :root {
     --bg: #05070b;
     --panel: #0c1118;
-    --line: #1a2330;
-    --text: #e8eef6;
-    --dim: #7d8a9c;
-    --accent: #ff2d3d;      /* GT red */
-    --accent2: #ff7a1a;
+    --line: #1f2a38;
+    --text: #ffffff;
+    --label: #c3cedb;
+    --dim: #8f9cad;
+    --accent: #ff2d3d;      /* GT red: brand, limit, warnings only */
+    --live: #4cc9ff;        /* live data: speed arc, g dot */
     --ok: #34d17a;
     --warn: #ffc23d;
+    --btn: #1f2a38;
+    --pad-y: 8px; --pad-x: 12px;
+    --top-h: clamp(40px, 8vh, 56px);
+    --gap: 1.2vh;
+    --vh: 100vh;
   }
+  @supports (height: 100dvh) { :root { --vh: 100dvh; } }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
-    font-family: -apple-system, "SF Pro Display", "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-user-select: none; }
+    font-family: -apple-system, "SF Pro Display", "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-user-select: none;
+    font-variant-numeric: tabular-nums; }
 
   .cluster {
     height: 100%; width: 100%;
-    display: grid; grid-template-rows: auto 1fr auto;
-    padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
-    gap: 1.2vh;
-    background: radial-gradient(ellipse at 50% 60%, #121a26 0%, var(--bg) 65%);
+    display: grid; grid-template-rows: var(--top-h) minmax(0, 1fr);
+    padding: max(var(--pad-y), env(safe-area-inset-top)) max(var(--pad-x), env(safe-area-inset-right)) max(var(--pad-y), env(safe-area-inset-bottom)) max(var(--pad-x), env(safe-area-inset-left));
+    gap: var(--gap);
+    background: radial-gradient(ellipse at 50% 55%, #121a26 0%, var(--bg) 65%);
   }
 
   /* top bar */
-  .top { display: flex; justify-content: space-between; align-items: center; font-size: clamp(12px, 2.4vh, 20px); color: var(--dim); }
-  .top .brand { color: var(--text); font-weight: 700; letter-spacing: .12em; }
+  .top { display: flex; align-items: center; gap: 1.6vw; font-size: clamp(13px, 2.6vh, 20px); color: var(--label); font-weight: 600; }
+  .top .brand { color: var(--text); font-weight: 800; letter-spacing: .12em; }
   .top .brand b { color: var(--accent); }
-  .gps { display: flex; align-items: center; gap: 6px; }
-  .dot { width: 9px; height: 9px; border-radius: 50%; background: #444; }
+  .top .spacer { flex: 1; }
+  .gps { display: flex; align-items: center; gap: 7px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #555; }
   .dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
   .dot.weak { background: var(--warn); }
-  .dot.demo { background: #4da3ff; }
-  #clock { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .dot.demo { background: var(--live); }
+  #clock { color: var(--text); font-weight: 700; }
+  .icon-btn { width: var(--top-h); height: var(--top-h); min-width: 44px; min-height: 44px; border-radius: 50%; border: none;
+    background: var(--btn); color: var(--text); display: grid; place-items: center; cursor: pointer; flex: none; }
+  .icon-btn svg { width: 48%; height: 48%; }
+  .icon-btn:active { transform: scale(.94); background: #2a3647; }
 
-  /* main */
-  .main { display: grid; grid-template-columns: 1fr minmax(0, 1.5fr) 1fr; gap: 1.5vw; align-items: center; min-height: 0; }
-  .side { display: grid; gap: 1.2vh; align-content: center; }
-  .card { background: linear-gradient(180deg, #0e141d, #0a0e14); border: 1px solid var(--line); border-radius: 14px; padding: 1.2vh 1.2vw; }
-  .label { font-size: clamp(9px, 1.7vh, 14px); color: var(--dim); letter-spacing: .1em; text-transform: uppercase; }
-  .val { font-size: clamp(16px, 4.6vh, 40px); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
-  .val small { font-size: .45em; color: var(--dim); font-weight: 500; margin-left: 3px; }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2vh; }
+  /* main: side | gauge | side */
+  .main { --g: min(calc(var(--vh) - var(--top-h) - var(--gap) - 2 * var(--pad-y) - 4px), 56vw);
+    display: grid; grid-template-columns: minmax(0, 1fr) var(--g) minmax(0, 1fr); gap: 1.4vw; min-height: 0; }
+  .side { display: grid; gap: var(--gap); min-height: 0; }
+  .side.left  { grid-template-rows: 1fr 1fr 1fr auto; }
+  .side.right { grid-template-rows: 1.5fr 1fr 1fr auto; }
+  .card { background: linear-gradient(180deg, #0f1620, #0a0e14); border: 1px solid var(--line); border-radius: 14px;
+    padding: 1vh 1.1vw; min-height: 0; min-width: 0; overflow: hidden; container-type: size;
+    display: flex; flex-direction: column; justify-content: center; gap: .4vh; }
+  .label { font-size: clamp(11px, 2vh, 16px); color: var(--label); font-weight: 650; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+  .val { font-size: clamp(16px, 4.8vh, 44px); font-size: clamp(16px, min(44cqh, 29cqi), 56px);
+    font-weight: 750; line-height: 1.05; color: var(--text); white-space: nowrap; }
+  .val small { font-size: .42em; color: var(--label); font-weight: 600; margin-left: .2em; letter-spacing: .02em; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); min-height: 0; }
 
   /* gauge */
-  .gauge-wrap { position: relative; height: 100%; max-height: 78vh; aspect-ratio: 1; margin: 0 auto; max-width: 100%; }
-  .gauge-wrap svg { width: 100%; height: 100%; overflow: visible; }
+  .gauge-wrap { position: relative; width: 100%; height: 100%; min-height: 0; container-type: size; }
+  .gauge-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-  #speed { font-size: clamp(48px, 21vh, 190px); font-weight: 800; line-height: .9; font-variant-numeric: tabular-nums; letter-spacing: -.03em; transition: color .3s; }
+  #speed { font-size: 20vh; font-size: 25cqmin; font-weight: 800; line-height: .9; letter-spacing: -.03em; transition: color .3s; }
   #speed.over { color: var(--accent); text-shadow: 0 0 30px rgba(255,45,61,.5); }
-  .unit { font-size: clamp(12px, 2.8vh, 24px); color: var(--dim); letter-spacing: .2em; margin-top: .6vh; }
-  #heading { margin-top: 1.4vh; font-size: clamp(12px, 2.8vh, 24px); font-weight: 700; color: var(--text); letter-spacing: .15em; }
-  .tick { stroke: #3a4656; stroke-width: 2; }
-  .tick.major { stroke: #9aa7b8; stroke-width: 3; }
-  .tlabel { fill: #8b97a8; font-size: 22px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+  .unit { font-size: 3vh; font-size: 4.4cqmin; color: var(--label); font-weight: 650; letter-spacing: .2em; margin-top: 1cqmin; }
+  #heading { margin-top: 2.2cqmin; font-size: 3.4vh; font-size: 5cqmin; font-weight: 750; color: var(--text); letter-spacing: .12em; }
+  .tick { stroke: #4a586b; stroke-width: 2; }
+  .tick.major { stroke: #dfe6ef; stroke-width: 4; }
+  .tlabel { fill: #e6ecf3; font-size: 30px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+  .tlabel.lim { fill: var(--accent); }
 
   /* g meter */
-  .gmeter { position: relative; width: 100%; aspect-ratio: 1; max-height: 24vh; margin: 0 auto; }
-  .gmeter svg { width: 100%; height: 100%; }
-  #gdot { transition: cx .1s linear, cy .1s linear; }
+  .gcard { justify-content: flex-start; }
+  .gcard .label { display: flex; justify-content: space-between; gap: 8px; }
+  #gval { color: var(--text); font-weight: 750; }
+  .gmeter { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; }
+  .gmeter svg { height: 100%; max-width: 100%; aspect-ratio: 1; }
+  .gring { fill: none; stroke: #33425a; stroke-width: 2; }
+  .gring.one { stroke: #56677f; }
+  .gcross { stroke: #263244; stroke-width: 1.5; }
+  .gtxt { fill: #8f9cad; font-size: 14px; font-weight: 600; }
 
-  /* bottom */
-  .bottom { display: flex; justify-content: center; gap: 1vw; flex-wrap: wrap; }
-  button { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 999px;
-    padding: 1vh 1.6vw; font-size: clamp(11px, 2vh, 17px); font-weight: 600; letter-spacing: .05em; cursor: pointer; }
-  button:active { transform: scale(.97); background: #141c27; }
-  button.on { border-color: var(--accent); color: var(--accent); }
+  /* buttons */
+  .btn { min-height: 52px; height: clamp(52px, 9vh, 64px); width: 100%; border: none; border-radius: 999px;
+    background: var(--btn); color: var(--text); font-size: clamp(14px, 2.4vh, 19px); font-weight: 750; letter-spacing: .06em; cursor: pointer; }
+  .btn:active { transform: scale(.97); background: #2a3647; }
+  .btn.on { background: var(--accent); }
+  .btn.on:active { background: #d81f2e; }
+
+  /* settings sheet */
+  .sheet { position: fixed; inset: 0; background: rgba(5,7,11,.82); display: flex; align-items: center; justify-content: center; z-index: 20; }
+  .sheet-panel { background: #0e141d; border: 1px solid var(--line); border-radius: 20px; padding: 24px; width: min(440px, 90vw);
+    display: grid; gap: 14px; }
+  .sheet-panel h2 { font-size: 20px; letter-spacing: .1em; }
+  .sheet-panel p { color: var(--label); font-size: 15px; line-height: 1.45; margin-top: -4px; }
+  .btn.ghost { background: transparent; border: 2px solid var(--line); }
 
   /* start overlay */
-  #start { position: fixed; inset: 0; background: rgba(5,7,11,.94); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4vh; z-index: 10; text-align: center; padding: 20px; }
+  #start { position: fixed; inset: 0; background: rgba(5,7,11,.96); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4vh; z-index: 30; text-align: center; padding: 20px; }
   #start h1 { font-size: clamp(22px, 5vh, 44px); letter-spacing: .08em; }
   #start h1 b { color: var(--accent); }
-  #start p { color: var(--dim); max-width: 560px; font-size: clamp(12px, 2.2vh, 17px); line-height: 1.5; }
+  #start p { color: var(--label); max-width: 560px; font-size: clamp(13px, 2.3vh, 17px); line-height: 1.5; }
   #start .warn { color: var(--warn); }
-  #start button { padding: 1.6vh 4vw; font-size: clamp(14px, 2.8vh, 22px); }
-  #start button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #start .btn { width: auto; padding: 0 9vw; background: var(--accent); font-size: clamp(16px, 3vh, 24px); }
   .hidden { display: none !important; }
 
   /* portrait fallback (phone held upright) */
   @media (orientation: portrait) {
-    .main { grid-template-columns: 1fr; grid-template-rows: auto auto auto; overflow-y: auto; }
-    .gauge-wrap { height: auto; width: 88vw; max-height: none; }
-    .side { grid-template-columns: 1fr 1fr; }
-    .gmeter { max-height: 18vh; }
+    .main { --g: 92vw; grid-template-columns: 1fr; grid-template-rows: var(--g) auto auto; overflow-y: auto; }
+    .gauge-wrap { order: -1; }
+    .side { grid-template-rows: none !important; grid-auto-rows: minmax(70px, auto); }
+    .gcard { height: 34vh; }
   }
 </style>
 </head>
@@ -99,18 +135,26 @@
   <div class="top">
     <div class="brand">VIRTUS <b>GT</b></div>
     <div class="gps"><span class="dot" id="gpsDot"></span><span id="gpsText">GPS off</span></div>
+    <div class="spacer"></div>
     <div id="clock">--:--</div>
+    <button class="icon-btn" id="btnFull" aria-label="Fullscreen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+    <button class="icon-btn" id="btnSettings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
   </div>
 
   <div class="main">
     <!-- left: trip -->
-    <div class="side">
+    <div class="side left">
       <div class="card"><div class="label">Trip</div><div class="val"><span id="trip">0.0</span><small>km</small></div></div>
       <div class="row2">
         <div class="card"><div class="label">Avg</div><div class="val"><span id="avg">0</span><small>km/h</small></div></div>
         <div class="card"><div class="label">Max</div><div class="val"><span id="max">0</span><small>km/h</small></div></div>
       </div>
       <div class="card"><div class="label">Drive time</div><div class="val" id="time">0:00:00</div></div>
+      <button class="btn" id="btnReset">RESET TRIP</button>
     </div>
 
     <!-- center: speedometer -->
@@ -118,6 +162,10 @@
       <svg viewBox="0 0 500 500" id="gauge">
         <defs>
           <linearGradient id="arcGrad" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0%" stop-color="#1e9bff"/>
+            <stop offset="100%" stop-color="#7fe0ff"/>
+          </linearGradient>
+          <linearGradient id="arcRed" x1="0" y1="1" x2="1" y2="0">
             <stop offset="0%" stop-color="#ff7a1a"/>
             <stop offset="100%" stop-color="#ff2d3d"/>
           </linearGradient>
@@ -126,11 +174,12 @@
             <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
         </defs>
+        <path id="track" fill="none" stroke="#18212d" stroke-width="24" stroke-linecap="round"/>
+        <path id="limitSeg" fill="none" stroke="#ff2d3d" stroke-width="6" stroke-linecap="round" opacity=".9"/>
         <g id="ticks"></g>
-        <path id="track" fill="none" stroke="#141c27" stroke-width="22" stroke-linecap="round"/>
-        <path id="arc" fill="none" stroke="url(#arcGrad)" stroke-width="22" stroke-linecap="round" pathLength="100"
+        <path id="arc" fill="none" stroke="url(#arcGrad)" stroke-width="24" stroke-linecap="round" pathLength="100"
               stroke-dasharray="100 100" stroke-dashoffset="100" filter="url(#glow)" style="transition: stroke-dashoffset .25s linear"/>
-        <circle id="limitMark" r="7" fill="#ffc23d"/>
+        <line id="limitTick" stroke="#ff2d3d" stroke-width="5" stroke-linecap="round"/>
       </svg>
       <div class="center">
         <div id="speed">0</div>
@@ -140,66 +189,69 @@
     </div>
 
     <!-- right: g-force, altitude, 0-100 -->
-    <div class="side">
-      <div class="card">
-        <div class="label">G-force <span id="gval" style="color:var(--text);float:right">0.00 g</span></div>
+    <div class="side right">
+      <div class="card gcard">
+        <div class="label"><span>G-force</span><span id="gval">0.00 g</span></div>
         <div class="gmeter">
           <svg viewBox="0 0 200 200">
-            <circle cx="100" cy="100" r="92" fill="none" stroke="#1a2330" stroke-width="2"/>
-            <circle cx="100" cy="100" r="61" fill="none" stroke="#1a2330" stroke-width="2"/>
-            <circle cx="100" cy="100" r="30" fill="none" stroke="#1a2330" stroke-width="2"/>
-            <line x1="8" y1="100" x2="192" y2="100" stroke="#1a2330" stroke-width="2"/>
-            <line x1="100" y1="8" x2="100" y2="192" stroke="#1a2330" stroke-width="2"/>
-            <text x="166" y="96" fill="#56627a" font-size="13">1g</text>
-            <circle id="gdot" cx="100" cy="100" r="11" fill="#ff2d3d" filter="url(#glow)"/>
+            <line class="gcross" x1="8" y1="100" x2="192" y2="100"/>
+            <line class="gcross" x1="100" y1="8" x2="100" y2="192"/>
+            <circle class="gring" cx="100" cy="100" r="44"/>
+            <circle class="gring one" cx="100" cy="100" r="88"/>
+            <text class="gtxt" x="104" y="52">0.5</text>
+            <text class="gtxt" x="104" y="8" dominant-baseline="hanging">1g</text>
+            <g id="gtrail"></g>
+            <circle id="gdot" cx="100" cy="100" r="10" fill="#4cc9ff" filter="url(#glow)"/>
           </svg>
         </div>
       </div>
-      <div class="row2">
-        <div class="card"><div class="label">Altitude</div><div class="val"><span id="alt">—</span><small>m</small></div></div>
-        <div class="card"><div class="label">0–100</div><div class="val"><span id="zeroto">—</span><small>s</small></div></div>
-      </div>
+      <div class="card"><div class="label">Altitude</div><div class="val"><span id="alt">—</span><small>m</small></div></div>
+      <div class="card"><div class="label">Best 0–100</div><div class="val"><span id="zeroto">—</span><small>s</small></div></div>
+      <button class="btn" id="btnLimit">LIMIT 80</button>
     </div>
   </div>
+</div>
 
-  <div class="bottom">
-    <button id="btnReset">RESET TRIP</button>
-    <button id="btnLimit">LIMIT 80</button>
-    <button id="btnCal">CALIBRATE G</button>
-    <button id="btnDemo">DEMO</button>
+<div id="settings" class="sheet hidden">
+  <div class="sheet-panel">
+    <h2>SETTINGS</h2>
+    <button class="btn" id="btnCal">CALIBRATE G</button>
+    <p>Mount the phone firmly and calibrate while the car is stopped on level ground.</p>
+    <button class="btn" id="btnFull2">FULLSCREEN</button>
+    <button class="btn ghost" id="btnClose">CLOSE</button>
   </div>
 </div>
 
 <div id="start">
   <h1>VIRTUS <b>GT</b> CLUSTER</h1>
-  <p>Speed, trip and heading come from your phone's GPS. G-force comes from the phone's motion sensor (mount the phone firmly, then tap Calibrate G when stopped).</p>
+  <p>Speed, trip and heading come from your phone's GPS. G-force comes from the phone's motion sensor (mount the phone firmly, then use Settings → Calibrate G when stopped).</p>
   <p class="warn">For co-passenger use only. Drive with your eyes on the road.</p>
-  <button class="primary" id="btnStart">START</button>
-  <button id="btnStartDemo">Try demo drive</button>
+  <button class="btn" id="btnStart">START</button>
 </div>
 
 <script>
 (() => {
   const $ = id => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  const svgEl = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; };
 
   // ---------- gauge geometry ----------
-  const MAX_KMH = 220, CX = 250, CY = 250, R = 205;
+  const MAX_KMH = 200, LABEL_STEP = 40, CX = 250, CY = 250, R = 205;
   const A0 = 135, SWEEP = 270; // degrees, 0 = east, clockwise
   const pt = (deg, r) => { const a = deg * Math.PI / 180; return [CX + r * Math.cos(a), CY + r * Math.sin(a)]; };
-  const arcPath = r => { const [x0, y0] = pt(A0, r), [x1, y1] = pt(A0 + SWEEP, r); return `M ${x0} ${y0} A ${r} ${r} 0 1 1 ${x1} ${y1}`; };
-  $('track').setAttribute('d', arcPath(R));
-  $('arc').setAttribute('d', arcPath(R));
-  const ticks = $('ticks'), NS = 'http://www.w3.org/2000/svg';
+  const ang = v => A0 + SWEEP * v / MAX_KMH;
+  const arcPath = (r, d0, d1) => { const [x0, y0] = pt(d0, r), [x1, y1] = pt(d1, r); return `M ${x0} ${y0} A ${r} ${r} 0 ${d1 - d0 > 180 ? 1 : 0} 1 ${x1} ${y1}`; };
+  $('track').setAttribute('d', arcPath(R, A0, A0 + SWEEP));
+  $('arc').setAttribute('d', arcPath(R, A0, A0 + SWEEP));
+  const ticks = $('ticks'), tickLabels = {};
   for (let v = 0; v <= MAX_KMH; v += 10) {
-    const deg = A0 + SWEEP * v / MAX_KMH, major = v % 20 === 0;
-    const [x0, y0] = pt(deg, R - 22), [x1, y1] = pt(deg, R - (major ? 42 : 32));
-    const l = document.createElementNS(NS, 'line');
-    Object.entries({ x1: x0, y1: y0, x2: x1, y2: y1, class: 'tick' + (major ? ' major' : '') }).forEach(([k, val]) => l.setAttribute(k, val));
-    ticks.appendChild(l);
+    const deg = ang(v), major = v % LABEL_STEP === 0;
+    const [x0, y0] = pt(deg, R - 24), [x1, y1] = pt(deg, R - (major ? 46 : 34));
+    svgEl('line', { x1: x0, y1: y0, x2: x1, y2: y1, class: 'tick' + (major ? ' major' : '') }, ticks);
     if (major) {
-      const [tx, ty] = pt(deg, R - 64), t = document.createElementNS(NS, 'text');
-      t.setAttribute('x', tx); t.setAttribute('y', ty); t.setAttribute('class', 'tlabel'); t.textContent = v;
-      ticks.appendChild(t);
+      const [tx, ty] = pt(deg, R - 72);
+      tickLabels[v] = svgEl('text', { x: tx, y: ty, class: 'tlabel' }, ticks);
+      tickLabels[v].textContent = v;
     }
   }
 
@@ -207,20 +259,26 @@
   const store = (() => { try { localStorage.setItem('_t', '1'); return localStorage; } catch (_) { const m = {}; return { getItem: k => m[k] ?? null, setItem: (k, v) => { m[k] = v; } }; } })();
   let saved = {};
   try { saved = JSON.parse(store.getItem('gtTrip') || '{}'); } catch (_) {}
+  const LIMITS = [60, 80, 100, 120, 140, 0];
   const st = {
     dist: saved.dist || 0, moving: saved.moving || 0, max: saved.max || 0,
-    best0100: saved.best0100 || null, limit: saved.limit || 80,
-    speed: 0, shown: 0, last: null, run0100: null, demo: false,
+    best0100: saved.best0100 || null, limit: LIMITS.includes(saved.limit) ? saved.limit : 80,
+    speed: 0, last: null, run0100: null, demo: false,
   };
   const save = () => store.setItem('gtTrip', JSON.stringify({ dist: st.dist, moving: st.moving, max: st.max, best0100: st.best0100, limit: st.limit }));
 
-  const LIMITS = [60, 80, 100, 120, 140, 0];
   const setLimitUI = () => {
     $('btnLimit').textContent = st.limit ? `LIMIT ${st.limit}` : 'LIMIT OFF';
     $('btnLimit').classList.toggle('on', !!st.limit);
-    const lm = $('limitMark');
-    if (st.limit) { const [x, y] = pt(A0 + SWEEP * st.limit / MAX_KMH, R); lm.setAttribute('cx', x); lm.setAttribute('cy', y); lm.style.display = ''; }
-    else lm.style.display = 'none';
+    const seg = $('limitSeg'), tk = $('limitTick');
+    Object.entries(tickLabels).forEach(([v, t]) => t.classList.toggle('lim', +v === st.limit));
+    if (st.limit) {
+      const d = ang(st.limit);
+      seg.setAttribute('d', arcPath(R + 20, d, A0 + SWEEP));
+      const [x0, y0] = pt(d, R - 14), [x1, y1] = pt(d, R + 23);
+      Object.entries({ x1: x0, y1: y0, x2: x1, y2: y1 }).forEach(([k, v]) => tk.setAttribute(k, v));
+      seg.style.display = tk.style.display = '';
+    } else seg.style.display = tk.style.display = 'none';
   };
   setLimitUI();
 
@@ -270,8 +328,10 @@
   }
 
   function render() {
+    const over = !!st.limit && st.speed > st.limit;
     $('speed').textContent = Math.round(st.speed);
-    $('speed').classList.toggle('over', !!st.limit && st.speed > st.limit);
+    $('speed').classList.toggle('over', over);
+    $('arc').setAttribute('stroke', over ? 'url(#arcRed)' : 'url(#arcGrad)');
     $('arc').style.strokeDashoffset = 100 - Math.min(100, st.speed / MAX_KMH * 100);
     $('trip').textContent = (st.dist / 1000).toFixed(1);
     $('max').textContent = Math.round(st.max);
@@ -285,6 +345,7 @@
   let watchId = null;
   function startGPS() {
     if (!('geolocation' in navigator)) { setGps('', 'No GPS'); return; }
+    setGps('', 'Waiting for GPS');
     watchId = navigator.geolocation.watchPosition(pos => {
       if (st.demo) return;
       const c = pos.coords;
@@ -314,14 +375,28 @@
     const e2 = cross(up, e1);
     showG(dot3(lin, e1) / 9.81, dot3(lin, e2) / 9.81);
   }
+
+  // fading trail behind the g dot
+  const G_R = 88, TRAIL_N = 24, TRAIL_MS = 50;
+  const trailDots = Array.from({ length: TRAIL_N }, (_, i) =>
+    svgEl('circle', { cx: 100, cy: 100, r: 2 + 6 * (1 - i / TRAIL_N), fill: '#4cc9ff', opacity: (0.45 * (1 - i / TRAIL_N)).toFixed(3) }, $('gtrail')));
+  const trail = [];
+  let lastTrail = 0;
   let gs = [0, 0];
   function showG(x, y) {
     gs = [gs[0] * 0.7 + x * 0.3, gs[1] * 0.7 + y * 0.3]; // smooth
     const m = Math.hypot(gs[0], gs[1]);
     const s = Math.min(m, 1) / (m || 1); // clamp the dot to the 1g ring
-    $('gdot').setAttribute('cx', 100 + gs[0] * s * 92);
-    $('gdot').setAttribute('cy', 100 - gs[1] * s * 92);
+    const cx = 100 + gs[0] * s * G_R, cy = 100 - gs[1] * s * G_R;
+    $('gdot').setAttribute('cx', cx);
+    $('gdot').setAttribute('cy', cy);
     $('gval').textContent = m.toFixed(2) + ' g';
+    const now = performance.now();
+    if (now - lastTrail >= TRAIL_MS) {
+      lastTrail = now;
+      trail.unshift([cx, cy]); trail.length = Math.min(trail.length, TRAIL_N);
+      trailDots.forEach((d, i) => { const p = trail[i] || trail[trail.length - 1]; d.setAttribute('cx', p[0]); d.setAttribute('cy', p[1]); });
+    }
   }
   async function startMotion() {
     try {
@@ -339,16 +414,34 @@
   }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && lock) keepAwake(); });
 
-  // ---------- demo drive (for testing without moving) ----------
-  let demoTimer = null, demoT = 0, demoPos = { lat: 19.076, lon: 72.8777 }, demoHead = 40;
-  function demo(on) {
-    st.demo = on;
-    $('btnDemo').classList.toggle('on', on);
-    clearInterval(demoTimer);
-    if (!on) { setGps('', watchId != null ? 'Waiting for GPS' : 'GPS off'); return; }
+  // ---------- fullscreen ----------
+  const docEl = document.documentElement;
+  const reqFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+  const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+  const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const standalone = !!(matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone);
+  function goFull() {
+    if (!reqFs || isFs()) return;
+    try { const p = reqFs.call(docEl, { navigationUI: 'hide' }); if (p && p.catch) p.catch(() => {}); } catch (_) {}
+  }
+  const toggleFull = () => { if (isFs()) { try { const p = exitFs.call(document); if (p && p.catch) p.catch(() => {}); } catch (_) {} } else goFull(); };
+  const syncFsUI = () => {
+    $('btnFull').classList.toggle('hidden', !reqFs || standalone || isFs());
+    $('btnFull2').classList.toggle('hidden', !reqFs || standalone);
+    $('btnFull2').textContent = isFs() ? 'EXIT FULLSCREEN' : 'FULLSCREEN';
+  };
+  document.addEventListener('fullscreenchange', syncFsUI);
+  document.addEventListener('webkitfullscreenchange', syncFsUI);
+  syncFsUI();
+
+  // ---------- demo drive (desk testing only: open with ?demo) ----------
+  const DEMO = new URLSearchParams(location.search).has('demo');
+  let demoT = 0, demoPos = { lat: 19.076, lon: 72.8777 }, demoHead = 40;
+  function startDemo() {
+    st.demo = true;
     setGps('demo', 'Demo drive');
     let v = 0;
-    demoTimer = setInterval(() => {
+    setInterval(() => {
       demoT += 0.25;
       const phase = demoT % 40;
       const target = phase < 3 ? 0 : phase < 14 ? 135 : phase < 25 ? 70 + 20 * Math.sin(demoT) : phase < 33 ? 105 : 0;
@@ -358,20 +451,37 @@
       const d = v / 3.6 * 0.25, r = Math.PI / 180;
       demoPos = { lat: demoPos.lat + d * Math.cos(demoHead * r) / 111320, lon: demoPos.lon + d * Math.sin(demoHead * r) / (111320 * Math.cos(demoPos.lat * r)) };
       onFix({ ...demoPos, speed: v / 3.6, heading: demoHead, alt: 14 + Math.sin(demoT / 6) * 3, acc: 5, t: Date.now() });
-      showG(Math.sin(demoT * 0.7) * (phase > 14 && phase < 25 ? 0.45 : 0.08), Math.max(-0.6, Math.min(0.5, (target - v) * 0.02)));
     }, 250);
+    // g-force at sensor-like rate so the trail is smooth
+    setInterval(() => {
+      const phase = demoT % 40, corner = phase > 14 && phase < 25;
+      showG(Math.sin(demoT * 0.7) * (corner ? 0.55 : 0.08), phase < 14 && phase > 3 ? 0.35 : phase > 33 ? -0.5 : corner ? 0.05 : 0);
+    }, 30);
   }
 
   // ---------- buttons ----------
-  $('btnStart').onclick = () => { $('start').classList.add('hidden'); startGPS(); startMotion(); keepAwake(); };
-  $('btnStartDemo').onclick = () => { $('start').classList.add('hidden'); startMotion(); keepAwake(); demo(true); };
-  $('btnDemo').onclick = () => demo(!st.demo);
+  $('btnStart').onclick = () => {
+    goFull();
+    $('start').classList.add('hidden');
+    startMotion(); keepAwake();
+    DEMO ? startDemo() : startGPS();
+  };
   $('btnReset').onclick = () => {
     if (!confirm('Reset trip distance, time, average and max?')) return;
     Object.assign(st, { dist: 0, moving: 0, max: 0, last: null }); save(); render();
   };
   $('btnLimit').onclick = () => { st.limit = LIMITS[(LIMITS.indexOf(st.limit) + 1) % LIMITS.length]; save(); setLimitUI(); render(); };
-  $('btnCal').onclick = () => { if (lastAig) { grav = norm(lastAig); gs = [0, 0]; } };
+  $('btnFull').onclick = goFull;
+  $('btnFull2').onclick = toggleFull;
+  $('btnSettings').onclick = () => $('settings').classList.remove('hidden');
+  $('btnClose').onclick = () => $('settings').classList.add('hidden');
+  $('settings').onclick = e => { if (e.target === $('settings')) $('settings').classList.add('hidden'); };
+  $('btnCal').onclick = () => {
+    const b = $('btnCal');
+    if (lastAig) { grav = norm(lastAig); gs = [0, 0]; trail.length = 0; b.textContent = 'CALIBRATED ✓'; }
+    else b.textContent = 'NO MOTION SENSOR';
+    setTimeout(() => { b.textContent = 'CALIBRATE G'; }, 1800);
+  };
 
   // ---------- clock ----------
   const tick = () => { const d = new Date(); $('clock').textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); };
