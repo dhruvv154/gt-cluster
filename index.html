@@ -6,57 +6,85 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#05070b">
+<meta name="theme-color" content="#07080a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,700&family=Barlow+Semi+Condensed:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
 <title>GT Digital Cluster</title>
 <style>
   :root {
-    --bg: #05070b;
-    --panel: #0c1118;
-    --line: #1f2a38;
+    --bg: #07080a;
     --text: #ffffff;
-    --label: #c3cedb;
-    --dim: #8f9cad;
-    --accent: #ff2d3d;      /* GT red: brand, limit, warnings only */
-    --live: #4cc9ff;        /* live data: speed arc, g dot */
-    --ok: #34d17a;
-    --warn: #ffc23d;
-    --btn: #1f2a38;
+    --label: #c8d0da;
+    --dim: #8a95a3;
+    --accent: #ff1f2e;      /* GT red: brand, limit, warnings */
+    --live: #ffffff;        /* live data: speed segments, g dot */
+    --ok: #2ee66b;
+    --warn: #ffc400;
+    --card: #12161c;
+    --btn: #242a33;
     --pad-y: 8px; --pad-x: 12px;
     --top-h: clamp(40px, 8vh, 56px);
     --gap: 1.2vh;
     --vh: 100vh;
+    --num: "Barlow Semi Condensed", "Barlow", -apple-system, "Segoe UI", Roboto, sans-serif;
+    --cond: "Barlow Condensed", "Arial Narrow", -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   @supports (height: 100dvh) { :root { --vh: 100dvh; } }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden;
-    font-family: -apple-system, "SF Pro Display", "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-user-select: none;
+    font-family: var(--cond); user-select: none; -webkit-user-select: none;
     font-variant-numeric: tabular-nums; }
 
+  /* carbon-fibre weave + centre spotlight */
+  .carbon {
+    background:
+      radial-gradient(ellipse at 50% 55%, rgba(40,46,56,.55) 0%, rgba(7,8,10,0) 60%),
+      linear-gradient(27deg, #0c0e11 5px, transparent 5px) 0 5px,
+      linear-gradient(207deg, #0c0e11 5px, transparent 5px) 10px 0,
+      linear-gradient(27deg, #121519 5px, transparent 5px) 0 10px,
+      linear-gradient(207deg, #121519 5px, transparent 5px) 10px 5px,
+      linear-gradient(90deg, #0e1013 10px, transparent 10px),
+      linear-gradient(#0f1215 25%, #0c0e11 25%, #0c0e11 50%, transparent 50%, transparent 75%, #131619 75%, #131619);
+    background-size: 100% 100%, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px, 20px 20px;
+    background-color: #0b0d10;
+  }
   .cluster {
     height: 100%; width: 100%;
     display: grid; grid-template-rows: var(--top-h) minmax(0, 1fr);
     padding: max(var(--pad-y), env(safe-area-inset-top)) max(var(--pad-x), env(safe-area-inset-right)) max(var(--pad-y), env(safe-area-inset-bottom)) max(var(--pad-x), env(safe-area-inset-left));
     gap: var(--gap);
-    background: radial-gradient(ellipse at 50% 55%, #121a26 0%, var(--bg) 65%);
   }
 
   /* top bar */
-  .top { display: flex; align-items: center; gap: 1.6vw; font-size: clamp(13px, 2.6vh, 20px); color: var(--label); font-weight: 600; }
-  .top .brand { color: var(--text); font-weight: 800; letter-spacing: .12em; }
-  .top .brand b { color: var(--accent); }
-  .top .spacer { flex: 1; }
-  .gps { display: flex; align-items: center; gap: 7px; }
+  .top { display: flex; align-items: center; gap: 1.6vw; font-size: clamp(14px, 2.8vh, 22px); color: var(--label); font-weight: 600; letter-spacing: .06em; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--num); font-style: italic; color: var(--text); font-weight: 800; letter-spacing: .08em; font-size: 1.15em; }
+  .brand b { color: var(--accent); }
+  .stripes { display: flex; gap: 3px; }
+  .stripes i { width: 6px; height: 1.1em; background: var(--accent); transform: skewX(-20deg); }
+  .stripes i:last-child { background: var(--text); }
+  .gps { display: flex; align-items: center; gap: 7px; text-transform: uppercase; }
   .dot { width: 10px; height: 10px; border-radius: 50%; background: #555; }
   .dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
   .dot.weak { background: var(--warn); }
-  .dot.demo { background: var(--live); }
-  #clock { color: var(--text); font-weight: 700; }
+  .dot.demo { background: #4cc9ff; }
+  #clock { color: var(--text); font-family: var(--num); font-weight: 700; font-style: italic; }
   .icon-btn { width: var(--top-h); height: var(--top-h); min-width: 44px; min-height: 44px; border-radius: 50%; border: none;
     background: var(--btn); color: var(--text); display: grid; place-items: center; cursor: pointer; flex: none; }
   .icon-btn svg { width: 48%; height: 48%; }
-  .icon-btn:active { transform: scale(.94); background: #2a3647; }
+  .icon-btn:active { transform: scale(.94); background: #343b46; }
+
+  /* shift lights */
+  .shift { flex: 1; display: flex; justify-content: center; gap: .6vw; }
+  .shift i { width: clamp(10px, 2.4vw, 30px); height: clamp(8px, 1.8vh, 14px); border-radius: 3px; background: #1d2128;
+    transform: skewX(-20deg); transition: background .15s, box-shadow .15s; }
+  .shift i.g.lit { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+  .shift i.y.lit { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
+  .shift i.r.lit { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+  .shift.over i { background: var(--accent); box-shadow: 0 0 12px var(--accent); animation: flash .4s steps(1) infinite; }
+  @keyframes flash { 50% { background: #3a0a0e; box-shadow: none; } }
 
   /* main: side | gauge | side */
   .main { --g: min(calc(var(--vh) - var(--top-h) - var(--gap) - 2 * var(--pad-y) - 4px), 56vw);
@@ -64,61 +92,69 @@
   .side { display: grid; gap: var(--gap); min-height: 0; }
   .side.left  { grid-template-rows: 1fr 1fr 1fr auto; }
   .side.right { grid-template-rows: 1.5fr 1fr 1fr auto; }
-  .card { background: linear-gradient(180deg, #0f1620, #0a0e14); border: 1px solid var(--line); border-radius: 14px;
+  .card { --cut: 16px; background: linear-gradient(160deg, #181d25, var(--card) 60%); border-left: 4px solid var(--accent);
+    clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%);
     padding: 1vh 1.1vw; min-height: 0; min-width: 0; overflow: hidden; container-type: size;
-    display: flex; flex-direction: column; justify-content: center; gap: .4vh; }
-  .label { font-size: clamp(11px, 2vh, 16px); color: var(--label); font-weight: 650; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
-  .val { font-size: clamp(16px, 4.8vh, 44px); font-size: clamp(16px, min(44cqh, 29cqi), 56px);
-    font-weight: 750; line-height: 1.05; color: var(--text); white-space: nowrap; }
-  .val small { font-size: .42em; color: var(--label); font-weight: 600; margin-left: .2em; letter-spacing: .02em; }
+    display: flex; flex-direction: column; justify-content: center; gap: .3vh; }
+  .label { font-family: var(--cond); font-size: clamp(12px, 2.2vh, 17px); color: var(--label); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; }
+  .val { font-family: var(--num); font-style: italic; font-size: clamp(16px, 4.8vh, 44px); font-size: clamp(16px, min(48cqh, 30cqi), 60px);
+    font-weight: 800; line-height: 1.02; color: var(--text); white-space: nowrap; }
+  .val small { font-family: var(--cond); font-style: normal; font-size: .42em; color: var(--label); font-weight: 600; margin-left: .25em; letter-spacing: .04em; }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); min-height: 0; }
 
   /* gauge */
   .gauge-wrap { position: relative; width: 100%; height: 100%; min-height: 0; container-type: size; }
   .gauge-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
-  #speed { font-size: 20vh; font-size: 25cqmin; font-weight: 800; line-height: .9; letter-spacing: -.03em; transition: color .3s; }
-  #speed.over { color: var(--accent); text-shadow: 0 0 30px rgba(255,45,61,.5); }
-  .unit { font-size: 3vh; font-size: 4.4cqmin; color: var(--label); font-weight: 650; letter-spacing: .2em; margin-top: 1cqmin; }
-  #heading { margin-top: 2.2cqmin; font-size: 3.4vh; font-size: 5cqmin; font-weight: 750; color: var(--text); letter-spacing: .12em; }
-  .tick { stroke: #4a586b; stroke-width: 2; }
-  .tick.major { stroke: #dfe6ef; stroke-width: 4; }
-  .tlabel { fill: #e6ecf3; font-size: 30px; font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+  #speed { font-family: var(--num); font-style: italic; font-size: 21vh; font-size: 27cqmin; font-weight: 800; line-height: .9; letter-spacing: -.02em;
+    padding-right: .06em; transition: color .3s; }
+  #speed.over { color: var(--accent); text-shadow: 0 0 30px rgba(255,31,46,.55); }
+  .unit { font-size: 3vh; font-size: 4.6cqmin; color: var(--label); font-weight: 700; letter-spacing: .24em; margin-top: 1.2cqmin;
+    padding: 0 .2em .25em .44em; border-bottom: .5cqmin solid var(--accent); }
+  #heading { margin-top: 2.4cqmin; font-family: var(--num); font-style: italic; font-size: 3.4vh; font-size: 5.2cqmin; font-weight: 700; color: var(--text); letter-spacing: .1em; }
+  .tick { stroke: #4a5260; stroke-width: 2; }
+  .tick.major { stroke: #f2f4f7; stroke-width: 5; }
+  .tlabel { fill: #f2f4f7; font-family: var(--num); font-style: italic; font-size: 34px; font-weight: 800; text-anchor: middle; dominant-baseline: central; }
   .tlabel.lim { fill: var(--accent); }
+  .seg { fill: none; stroke: #1b1f26; stroke-width: 26; }
+  .seg.lit { stroke: var(--live); }
+  .seg.lit.over { stroke: var(--accent); }
 
   /* g meter */
   .gcard { justify-content: flex-start; }
   .gcard .label { display: flex; justify-content: space-between; gap: 8px; }
-  #gval { color: var(--text); font-weight: 750; }
+  #gval { color: var(--text); font-family: var(--num); font-style: italic; font-weight: 800; letter-spacing: .04em; }
   .gmeter { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: center; }
   .gmeter svg { height: 100%; max-width: 100%; aspect-ratio: 1; }
-  .gring { fill: none; stroke: #33425a; stroke-width: 2; }
-  .gring.one { stroke: #56677f; }
-  .gcross { stroke: #263244; stroke-width: 1.5; }
-  .gtxt { fill: #8f9cad; font-size: 14px; font-weight: 600; }
+  .gring { fill: none; stroke: #39414e; stroke-width: 2; }
+  .gring.one { stroke: #5d6878; stroke-width: 2.5; }
+  .gcross { stroke: #262c35; stroke-width: 1.5; }
+  .gtxt { fill: #8a95a3; font-size: 14px; font-weight: 600; font-family: var(--cond); }
 
-  /* buttons */
-  .btn { min-height: 52px; height: clamp(52px, 9vh, 64px); width: 100%; border: none; border-radius: 999px;
-    background: var(--btn); color: var(--text); font-size: clamp(14px, 2.4vh, 19px); font-weight: 750; letter-spacing: .06em; cursor: pointer; }
-  .btn:active { transform: scale(.97); background: #2a3647; }
+  /* buttons: angled race-style pills */
+  .btn { min-height: 52px; height: clamp(52px, 9vh, 64px); width: 100%; border: none; border-radius: 0;
+    clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
+    background: var(--btn); color: var(--text); font-family: var(--cond); font-style: italic; font-size: clamp(16px, 2.8vh, 22px);
+    font-weight: 700; letter-spacing: .12em; cursor: pointer; }
+  .btn:active { transform: scale(.97); background: #343b46; }
   .btn.on { background: var(--accent); }
-  .btn.on:active { background: #d81f2e; }
+  .btn.on:active { background: #d0101e; }
 
   /* settings sheet */
-  .sheet { position: fixed; inset: 0; background: rgba(5,7,11,.82); display: flex; align-items: center; justify-content: center; z-index: 20; }
-  .sheet-panel { background: #0e141d; border: 1px solid var(--line); border-radius: 20px; padding: 24px; width: min(440px, 90vw);
-    display: grid; gap: 14px; }
-  .sheet-panel h2 { font-size: 20px; letter-spacing: .1em; }
-  .sheet-panel p { color: var(--label); font-size: 15px; line-height: 1.45; margin-top: -4px; }
-  .btn.ghost { background: transparent; border: 2px solid var(--line); }
+  .sheet { position: fixed; inset: 0; background: rgba(5,6,8,.85); display: flex; align-items: center; justify-content: center; z-index: 20; }
+  .sheet-panel { background: #12161c; border-left: 4px solid var(--accent); padding: 24px; width: min(440px, 90vw); display: grid; gap: 14px;
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%); }
+  .sheet-panel h2 { font-family: var(--num); font-style: italic; font-size: 22px; letter-spacing: .12em; }
+  .sheet-panel p { color: var(--label); font-size: 16px; line-height: 1.4; margin-top: -4px; }
+  .btn.ghost { background: transparent; box-shadow: inset 0 0 0 2px #39414e; }
 
   /* start overlay */
-  #start { position: fixed; inset: 0; background: rgba(5,7,11,.96); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4vh; z-index: 30; text-align: center; padding: 20px; }
-  #start h1 { font-size: clamp(22px, 5vh, 44px); letter-spacing: .08em; }
+  #start { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4vh; z-index: 30; text-align: center; padding: 20px; }
+  #start h1 { font-family: var(--num); font-style: italic; font-weight: 800; font-size: clamp(26px, 6vh, 54px); letter-spacing: .06em; display: flex; align-items: center; gap: 14px; }
   #start h1 b { color: var(--accent); }
-  #start p { color: var(--label); max-width: 560px; font-size: clamp(13px, 2.3vh, 17px); line-height: 1.5; }
+  #start p { color: var(--label); max-width: 560px; font-size: clamp(14px, 2.4vh, 18px); line-height: 1.45; }
   #start .warn { color: var(--warn); }
-  #start .btn { width: auto; padding: 0 9vw; background: var(--accent); font-size: clamp(16px, 3vh, 24px); }
+  #start .btn { width: auto; padding: 0 9vw; background: var(--accent); font-size: clamp(18px, 3.2vh, 26px); }
   .hidden { display: none !important; }
 
   /* portrait fallback (phone held upright) */
@@ -127,15 +163,16 @@
     .gauge-wrap { order: -1; }
     .side { grid-template-rows: none !important; grid-auto-rows: minmax(70px, auto); }
     .gcard { height: 34vh; }
+    .shift { display: none; }
   }
 </style>
 </head>
 <body>
-<div class="cluster">
+<div class="cluster carbon">
   <div class="top">
-    <div class="brand">VIRTUS <b>GT</b></div>
+    <div class="brand"><span class="stripes"><i></i><i></i><i></i></span>VIRTUS <b>GT</b></div>
     <div class="gps"><span class="dot" id="gpsDot"></span><span id="gpsText">GPS off</span></div>
-    <div class="spacer"></div>
+    <div class="shift" id="shift"></div>
     <div id="clock">--:--</div>
     <button class="icon-btn" id="btnFull" aria-label="Fullscreen">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
@@ -161,25 +198,27 @@
     <div class="gauge-wrap">
       <svg viewBox="0 0 500 500" id="gauge">
         <defs>
-          <linearGradient id="arcGrad" x1="0" y1="1" x2="1" y2="0">
-            <stop offset="0%" stop-color="#1e9bff"/>
-            <stop offset="100%" stop-color="#7fe0ff"/>
+          <linearGradient id="bezel" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#d9dee5"/>
+            <stop offset="45%" stop-color="#3a414c"/>
+            <stop offset="70%" stop-color="#9aa3af"/>
+            <stop offset="100%" stop-color="#2a3038"/>
           </linearGradient>
-          <linearGradient id="arcRed" x1="0" y1="1" x2="1" y2="0">
-            <stop offset="0%" stop-color="#ff7a1a"/>
-            <stop offset="100%" stop-color="#ff2d3d"/>
-          </linearGradient>
+          <radialGradient id="face" cx="50%" cy="45%" r="55%">
+            <stop offset="0%" stop-color="#1a1f27"/>
+            <stop offset="100%" stop-color="#07080a" stop-opacity=".9"/>
+          </radialGradient>
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="6" result="b"/>
             <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
         </defs>
-        <path id="track" fill="none" stroke="#18212d" stroke-width="24" stroke-linecap="round"/>
-        <path id="limitSeg" fill="none" stroke="#ff2d3d" stroke-width="6" stroke-linecap="round" opacity=".9"/>
+        <circle cx="250" cy="250" r="240" fill="url(#face)" stroke="url(#bezel)" stroke-width="4"/>
+        <circle cx="250" cy="250" r="112" fill="none" stroke="#232831" stroke-width="2"/>
+        <path id="limitSeg" fill="none" stroke="#ff1f2e" stroke-width="7" opacity=".95"/>
+        <g id="segs" filter="url(#glow)"></g>
         <g id="ticks"></g>
-        <path id="arc" fill="none" stroke="url(#arcGrad)" stroke-width="24" stroke-linecap="round" pathLength="100"
-              stroke-dasharray="100 100" stroke-dashoffset="100" filter="url(#glow)" style="transition: stroke-dashoffset .25s linear"/>
-        <line id="limitTick" stroke="#ff2d3d" stroke-width="5" stroke-linecap="round"/>
+        <line id="limitTick" stroke="#ff1f2e" stroke-width="6" stroke-linecap="round"/>
       </svg>
       <div class="center">
         <div id="speed">0</div>
@@ -201,7 +240,7 @@
             <text class="gtxt" x="104" y="52">0.5</text>
             <text class="gtxt" x="104" y="8" dominant-baseline="hanging">1g</text>
             <g id="gtrail"></g>
-            <circle id="gdot" cx="100" cy="100" r="10" fill="#4cc9ff" filter="url(#glow)"/>
+            <circle id="gdot" cx="100" cy="100" r="10" fill="#ffffff" filter="url(#glow)"/>
           </svg>
         </div>
       </div>
@@ -222,8 +261,8 @@
   </div>
 </div>
 
-<div id="start">
-  <h1>VIRTUS <b>GT</b> CLUSTER</h1>
+<div id="start" class="carbon">
+  <h1><span class="stripes"><i></i><i></i><i></i></span>VIRTUS <b>GT</b></h1>
   <p>Speed, trip and heading come from your phone's GPS. G-force comes from the phone's motion sensor (mount the phone firmly, then use Settings → Calibrate G when stopped).</p>
   <p class="warn">For co-passenger use only. Drive with your eyes on the road.</p>
   <button class="btn" id="btnStart">START</button>
@@ -241,8 +280,27 @@
   const pt = (deg, r) => { const a = deg * Math.PI / 180; return [CX + r * Math.cos(a), CY + r * Math.sin(a)]; };
   const ang = v => A0 + SWEEP * v / MAX_KMH;
   const arcPath = (r, d0, d1) => { const [x0, y0] = pt(d0, r), [x1, y1] = pt(d1, r); return `M ${x0} ${y0} A ${r} ${r} 0 ${d1 - d0 > 180 ? 1 : 0} 1 ${x1} ${y1}`; };
-  $('track').setAttribute('d', arcPath(R, A0, A0 + SWEEP));
-  $('arc').setAttribute('d', arcPath(R, A0, A0 + SWEEP));
+  // segmented speed bar: N blocks with small gaps
+  const SEG_N = 54, SEG_DEG = SWEEP / SEG_N, SEG_GAP = 1.1;
+  const segs = Array.from({ length: SEG_N }, (_, i) =>
+    svgEl('path', { class: 'seg', d: arcPath(R, A0 + i * SEG_DEG + SEG_GAP / 2, A0 + (i + 1) * SEG_DEG - SEG_GAP / 2) }, $('segs')));
+  let segLit = -1, segOver = null;
+  const setSegs = (kmh, over) => {
+    const n = Math.min(SEG_N, Math.round(kmh / MAX_KMH * SEG_N));
+    if (n === segLit && over === segOver) return;
+    segs.forEach((el, i) => { el.classList.toggle('lit', i < n); el.classList.toggle('over', over); });
+    segLit = n; segOver = over;
+  };
+
+  // shift lights: fill up towards the limit, flash when over
+  const SHIFT_N = 12, shiftEls = Array.from({ length: SHIFT_N }, (_, i) => {
+    const e = document.createElement('i'); e.className = i < 6 ? 'g' : i < 9 ? 'y' : 'r'; $('shift').appendChild(e); return e;
+  });
+  const setShift = (kmh, over) => {
+    const ref = st.limit || MAX_KMH, n = Math.min(SHIFT_N, Math.round(kmh / ref * SHIFT_N));
+    shiftEls.forEach((e, i) => e.classList.toggle('lit', i < n));
+    $('shift').classList.toggle('over', over);
+  };
   const ticks = $('ticks'), tickLabels = {};
   for (let v = 0; v <= MAX_KMH; v += 10) {
     const deg = ang(v), major = v % LABEL_STEP === 0;
@@ -331,8 +389,8 @@
     const over = !!st.limit && st.speed > st.limit;
     $('speed').textContent = Math.round(st.speed);
     $('speed').classList.toggle('over', over);
-    $('arc').setAttribute('stroke', over ? 'url(#arcRed)' : 'url(#arcGrad)');
-    $('arc').style.strokeDashoffset = 100 - Math.min(100, st.speed / MAX_KMH * 100);
+    setSegs(st.speed, over);
+    setShift(st.speed, over);
     $('trip').textContent = (st.dist / 1000).toFixed(1);
     $('max').textContent = Math.round(st.max);
     $('avg').textContent = st.moving > 0 ? Math.round(st.dist / st.moving * 3.6) : 0;
@@ -379,7 +437,7 @@
   // fading trail behind the g dot
   const G_R = 88, TRAIL_N = 24, TRAIL_MS = 50;
   const trailDots = Array.from({ length: TRAIL_N }, (_, i) =>
-    svgEl('circle', { cx: 100, cy: 100, r: 2 + 6 * (1 - i / TRAIL_N), fill: '#4cc9ff', opacity: (0.45 * (1 - i / TRAIL_N)).toFixed(3) }, $('gtrail')));
+    svgEl('circle', { cx: 100, cy: 100, r: 2 + 6 * (1 - i / TRAIL_N), fill: '#ff1f2e', opacity: (0.6 * (1 - i / TRAIL_N)).toFixed(3) }, $('gtrail')));
   const trail = [];
   let lastTrail = 0;
   let gs = [0, 0];
