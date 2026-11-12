@@ -318,12 +318,15 @@
   let saved = {};
   try { saved = JSON.parse(store.getItem('gtTrip') || '{}'); } catch (_) {}
   const LIMITS = [60, 80, 100, 120, 140, 0];
+  const MAX_SANE_KMH = 250;  // above the car's top speed: anything faster is a GPS glitch
+  const MAX_ACCEL = 40;      // km/h per second (~1.1 g); no road car changes speed faster
+  const MAX_ACC_M = 50;      // ignore fixes less accurate than this
   const st = {
-    dist: saved.dist || 0, moving: saved.moving || 0, max: saved.max || 0,
+    dist: saved.dist || 0, moving: saved.moving || 0, max: saved.max > 0 && saved.max <= MAX_SANE_KMH ? saved.max : 0,
     best0100: saved.best0100 || null, limit: LIMITS.includes(saved.limit) ? saved.limit : 80,
-    speed: 0, last: null, run0100: null, demo: false,
+    speed: 0, speedT: null, last: null, run0100: null, demo: false,
   };
-  const save = () => store.setItem('gtTrip', JSON.stringify({ dist: st.dist, moving: st.moving, max: st.max, best0100: st.best0100, limit: st.limit }));
+  const save = () => !st.demo && store.setItem('gtTrip', JSON.stringify({ dist: st.dist, moving: st.moving, max: st.max, best0100: st.best0100, limit: st.limit }));
 
   const setLimitUI = () => {
     $('btnLimit').textContent = st.limit ? `LIMIT ${st.limit}` : 'LIMIT OFF';
@@ -352,19 +355,25 @@
 
   // ---------- core update from a position fix ----------
   function onFix(f) { // f: {lat, lon, speed (m/s|null), heading, alt, acc, t (ms)}
+    if (f.acc != null && f.acc > MAX_ACC_M) return;    // coarse wifi/cell fix: position can be off by 100s of m
     const p = st.last;
+    const dt = p ? (f.t - p.t) / 1000 : 0;
+    if (p && dt <= 0) return;                          // duplicate or out-of-order fix
+    const near = p && dt < 10;
+    const d = near ? hav(p, f) : 0;
     let kmh = f.speed != null && f.speed >= 0 ? f.speed * 3.6 : null;
-    if (p) {
-      const dt = (f.t - p.t) / 1000;
-      if (dt > 0 && dt < 10) {
-        const d = hav(p, f);
-        if (kmh == null) kmh = d / dt * 3.6;            // fallback when GPS gives no speed
-        if (kmh > 3 && d > Math.min(f.acc, 25) * 0.3) {  // ignore GPS jitter while stationary
-          st.dist += d; st.moving += dt;
-        }
-      }
+    // fallback when GPS gives no speed: only trust movement larger than the position error
+    if (kmh == null) kmh = near && d > ((f.acc || 0) + (p.acc || 0)) / 2 ? d / dt * 3.6 : 0;
+    // a position jump shows up as an impossible speed or acceleration: drop it and re-anchor
+    const jump = near && d / dt * 3.6 > MAX_SANE_KMH;
+    const since = st.speedT != null ? (f.t - st.speedT) / 1000 : Infinity; // since last accepted reading
+    const spike = since > 0 && since < 10 && Math.abs(kmh - st.speed) / since > MAX_ACCEL;
+    if (kmh > MAX_SANE_KMH || jump || spike) { st.last = f; return; }
+    st.speedT = f.t;
+    if (near && kmh > 3 && d > Math.min(f.acc || 0, 25) * 0.3) { // ignore GPS jitter while stationary
+      st.dist += d; st.moving += dt;
     }
-    kmh = Math.max(0, kmh || 0);
+    kmh = Math.max(0, kmh);
     if (kmh < 2) kmh = 0;
     st.speed = kmh;
     st.max = Math.max(st.max, kmh);
